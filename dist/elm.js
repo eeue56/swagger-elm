@@ -8102,11 +8102,14 @@ var _user$project$Codegen_Function$functionDeclaration = F4(
 			name,
 			A2(
 				_elm_lang$core$Basics_ops['++'],
+				' ',
 				A2(
-					_elm_lang$core$String$join,
-					' ',
-					A2(_elm_lang$core$List$map, _user$project$Codegen_Function$argName, args)),
-				A2(_elm_lang$core$Basics_ops['++'], ' = \n', body)));
+					_elm_lang$core$Basics_ops['++'],
+					A2(
+						_elm_lang$core$String$join,
+						' ',
+						A2(_elm_lang$core$List$map, _user$project$Codegen_Function$argName, args)),
+					A2(_elm_lang$core$Basics_ops['++'], ' = \n', body))));
 	});
 var _user$project$Codegen_Function$functionType = F4(
 	function (name, args, type_, body) {
@@ -8151,6 +8154,27 @@ var _user$project$Codegen_Function$Arg = F2(
 	function (a, b) {
 		return {ctor: 'Arg', _0: a, _1: b};
 	});
+var _user$project$Codegen_Function$arg = F2(
+	function (type_, name) {
+		return A2(_user$project$Codegen_Function$Arg, type_, name);
+	});
+
+var _user$project$Codegen_List$list = function (_p0) {
+	return A3(
+		_elm_lang$core$Basics$flip,
+		F2(
+			function (x, y) {
+				return A2(_elm_lang$core$Basics_ops['++'], x, y);
+			}),
+		' ]',
+		A2(
+			F2(
+				function (x, y) {
+					return A2(_elm_lang$core$Basics_ops['++'], x, y);
+				}),
+			'[ ',
+			A2(_elm_lang$core$String$join, '\n  , ', _p0)));
+};
 
 var _user$project$Codegen_Literal$string = function (str) {
 	return A2(
@@ -8158,6 +8182,20 @@ var _user$project$Codegen_Literal$string = function (str) {
 		'\"',
 		A2(_elm_lang$core$Basics_ops['++'], str, '\"'));
 };
+
+var _user$project$Codegen_Tuple$tuple = F2(
+	function (fst, snd) {
+		return A2(
+			_elm_lang$core$Basics_ops['++'],
+			'( ',
+			A2(
+				_elm_lang$core$Basics_ops['++'],
+				fst,
+				A2(
+					_elm_lang$core$Basics_ops['++'],
+					', ',
+					A2(_elm_lang$core$Basics_ops['++'], snd, ')'))));
+	});
 
 var _user$project$Codegen_Utils$keywords = {
 	ctor: '::',
@@ -8995,6 +9033,12 @@ var _user$project$Generate_Utils$nestedTypeName = F2(
 			_user$project$Generate_Utils$typeName(parentName),
 			_user$project$Generate_Utils$typeName(name));
 	});
+var _user$project$Generate_Utils$encoderName = function (name) {
+	return A2(
+		_elm_lang$core$Basics_ops['++'],
+		'encode',
+		_user$project$Generate_Utils$typeName(name));
+};
 var _user$project$Generate_Utils$nestedDecoderName = F2(
 	function (parentName, name) {
 		return A2(
@@ -9407,7 +9451,86 @@ var _user$project$Generate_Decoder$renderDecoder = function (definition) {
 		_user$project$Generate_Decoder$renderDecoderBody(definition));
 };
 
-var _user$project$Generate_Headers$renderHeaders = 'module Decoder exposing (..)\n\nimport Json.Decode exposing (Decoder, string, int, float, dict, list, bool, map, value, decodeValue, decodeString, lazy, succeed, fail, andThen)\nimport Json.Decode.Pipeline exposing (decode, required, optional, hardcoded)\nimport Dict exposing (Dict)\n\n\nmaybe : String -> Decoder a -> Decoder (Maybe a -> b) -> Decoder b\nmaybe name decoder =\n    optional name (map Just decoder) Nothing\n\n\ncustomDecoder : Decoder a -> (a -> Result String b) -> Decoder b\ncustomDecoder decoder toResult =\n    andThen\n        (\\a ->\n            case toResult a of\n                Ok b ->\n                    succeed b\n\n                Err err ->\n                    fail err\n        )\n        decoder\n\n\n';
+var _user$project$Generate_Encoder$renderObjectProperty = F2(
+	function (parentName, property) {
+		var _p0 = property;
+		switch (_p0.ctor) {
+			case 'Required':
+				return A2(
+					_user$project$Codegen_Tuple$tuple,
+					_user$project$Codegen_Literal$string(_p0._0),
+					'mu');
+			case 'Optional':
+				return A2(
+					_user$project$Codegen_Tuple$tuple,
+					_user$project$Codegen_Literal$string(_p0._0),
+					'mu');
+			default:
+				return A2(
+					_user$project$Codegen_Tuple$tuple,
+					_user$project$Codegen_Literal$string(_p0._0),
+					'mu');
+		}
+	});
+var _user$project$Generate_Encoder$renderObjectBody = F2(
+	function (name, _p1) {
+		var _p2 = _p1;
+		return A2(
+			F2(
+				function (x, y) {
+					return A2(_elm_lang$core$Basics_ops['++'], x, y);
+				}),
+			'Json.Encode.object ',
+			_user$project$Codegen_List$list(
+				A2(
+					_elm_lang$core$List$map,
+					_user$project$Generate_Encoder$renderObjectProperty(name),
+					_p2._0)));
+	});
+var _user$project$Generate_Encoder$renderPrimitiveBody = function (typeName) {
+	return A2(
+		_elm_lang$core$Basics_ops['++'],
+		'Json.Encode.',
+		A2(_elm_lang$core$Basics_ops['++'], typeName, ' value'));
+};
+var _user$project$Generate_Encoder$renderEncoderBody = function (definition) {
+	var _p3 = _user$project$Swagger_Definition$getType(definition);
+	switch (_p3.ctor) {
+		case 'Object_':
+			return A2(
+				_user$project$Generate_Encoder$renderObjectBody,
+				_user$project$Swagger_Definition$getFullName(definition),
+				_p3._0);
+		case 'String_':
+			return _user$project$Generate_Encoder$renderPrimitiveBody('string');
+		case 'Int_':
+			return _user$project$Generate_Encoder$renderPrimitiveBody('int');
+		case 'Float_':
+			return _user$project$Generate_Encoder$renderPrimitiveBody('float');
+		case 'Bool_':
+			return _user$project$Generate_Encoder$renderPrimitiveBody('bool');
+		default:
+			return 'mjau';
+	}
+};
+var _user$project$Generate_Encoder$renderEncoder = function (definition) {
+	var name = _user$project$Swagger_Definition$getFullName(definition);
+	return A4(
+		_user$project$Codegen_Function$function,
+		_user$project$Generate_Utils$encoderName(name),
+		{
+			ctor: '::',
+			_0: A2(
+				_user$project$Codegen_Function$arg,
+				_user$project$Generate_Utils$typeName(name),
+				'value'),
+			_1: {ctor: '[]'}
+		},
+		'Json.Encode.Value',
+		_user$project$Generate_Encoder$renderEncoderBody(definition));
+};
+
+var _user$project$Generate_Headers$renderHeaders = 'module Decoder exposing (..)\n\nimport Json.Decode exposing (Decoder, string, int, float, dict, list, bool, map, value, decodeValue, decodeString, lazy, succeed, fail, andThen)\nimport Json.Decode.Pipeline exposing (decode, required, optional, hardcoded)\nimport Json.Encode\nimport Dict exposing (Dict)\n\n\nmaybe : String -> Decoder a -> Decoder (Maybe a -> b) -> Decoder b\nmaybe name decoder =\n    optional name (map Just decoder) Nothing\n\n\ncustomDecoder : Decoder a -> (a -> Result String b) -> Decoder b\ncustomDecoder decoder toResult =\n    andThen\n        (\\a ->\n            case toResult a of\n                Ok b ->\n                    succeed b\n\n                Err err ->\n                    fail err\n        )\n        decoder\n\n\n';
 
 var _user$project$Generate_Swagger$moduleName = function (_p0) {
 	return _user$project$Codegen_Utils$capitalize(
@@ -9425,8 +9548,12 @@ var _user$project$Generate_Swagger$renderDefinition = function (definition) {
 				_0: _user$project$Generate_Decoder$renderDecoder(definition),
 				_1: {
 					ctor: '::',
-					_0: '\n\n',
-					_1: {ctor: '[]'}
+					_0: _user$project$Generate_Encoder$renderEncoder(definition),
+					_1: {
+						ctor: '::',
+						_0: '\n\n',
+						_1: {ctor: '[]'}
+					}
 				}
 			}
 		});

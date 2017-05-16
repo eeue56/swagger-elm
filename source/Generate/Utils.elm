@@ -13,6 +13,11 @@ nestedDecoderName parentName name =
     "decode" ++ typeName parentName ++ typeName name
 
 
+encoderName : String -> String
+encoderName name =
+    "encode" ++ typeName name
+
+
 typeName : String -> String
 typeName =
     capitalize << sanitize

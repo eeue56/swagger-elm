@@ -7,6 +7,7 @@ renderHeaders =
 
 import Json.Decode exposing (Decoder, string, int, float, dict, list, bool, map, value, decodeValue, decodeString, lazy, succeed, fail, andThen)
 import Json.Decode.Pipeline exposing (decode, required, optional, hardcoded)
+import Json.Encode
 import Dict exposing (Dict)
 
 
